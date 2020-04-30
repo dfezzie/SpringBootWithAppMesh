@@ -25,13 +25,22 @@ public class Application {
 		if (url == null) {
 			url = DEFAULT_COLOR_TELLER;
 		}
-		Color color = restTemplate.getForObject(url, Color.class);
-		return color.getColor();
+		try {
+			Color color = restTemplate.getForObject(url, Color.class);
+			return color.getColor();
+		} catch(Exception e) {
+			return e.getMessage();
+		}
 	}
 
 	@RequestMapping("/")
 	public String getColor(RestTemplate restTemplate) {
 		return callColorTeller(restTemplate);
+	}
+
+	@RequestMapping("/ping")
+	public String ping() {
+		return "OK";
 	}
 
 	public static void main(String[] args) {

@@ -2,3 +2,5 @@
 .gradle
 .mvn
 .jdk8
+target
+build

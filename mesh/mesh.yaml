@@ -1,0 +1,75 @@
+Description: >
+  This template deploys the mesh and all of its components.
+
+Parameters:
+
+  MeshName:
+    Description: The name of the mesh to create
+    Type: String
+
+  ServicesDomain:
+    Description: The DNS suffice applied to virtual service names (e.g. default.svc.cluster.local)
+    Type: String
+
+Resources:
+
+  Mesh:
+    Type: AWS::AppMesh::Mesh
+    Properties:
+      MeshName: !Ref MeshName
+
+  ColorGatewayVirtualNode:
+    Type: AWS::AppMesh::VirtualNode
+    Properties:
+      MeshName: !GetAtt Mesh.MeshName
+      VirtualNodeName: ColorGateway
+      Spec:
+        Logging:
+          AccessLog:
+            File:
+              Path: "/dev/stdout"
+        Backends:
+          - VirtualService:
+              VirtualServiceName: !Sub "colorteller.${ServicesDomain}"
+        Listeners:
+          - PortMapping:
+              Port: 8080
+              Protocol: http
+        ServiceDiscovery:
+          DNS:
+            Hostname: !Sub "colorgateway.${ServicesDomain}"
+
+  ColorTellerVirtualNode:
+    Type: AWS::AppMesh::VirtualNode
+    Properties:
+      MeshName: !GetAtt Mesh.MeshName
+      VirtualNodeName: ColorTellerWhite
+      Spec:
+        Logging:
+          AccessLog:
+            File:
+              Path: "/dev/stdout"
+        Listeners:
+          - PortMapping:
+              Port: 8080
+              Protocol: http
+            HealthCheck:
+              Protocol: http
+              Path: /ping
+              HealthyThreshold: 2
+              UnhealthyThreshold: 3
+              TimeoutMillis: 2000
+              IntervalMillis: 5000
+        ServiceDiscovery:
+          DNS:
+            Hostname: !Sub "colorteller.${ServicesDomain}"
+
+  ColorTellerVirtualService:
+    Type: AWS::AppMesh::VirtualService
+    Properties:
+      MeshName: !GetAtt Mesh.MeshName
+      VirtualServiceName: !Sub "colorteller.${ServicesDomain}"
+      Spec:
+        Provider:
+          VirtualNode:
+            VirtualNodeName: !GetAtt ColorTellerVirtualNode.VirtualNodeName

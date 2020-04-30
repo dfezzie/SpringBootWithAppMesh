@@ -20,6 +20,11 @@ public class Application {
 		return "{ \"color\": \"" + color + "\" }";
 	}
 
+	@RequestMapping("/ping")
+	public String ping() {
+		return "OK";
+	}
+
 	public static void main(String[] args) {
 		SpringApplication.run(Application.class, args);
 	}
